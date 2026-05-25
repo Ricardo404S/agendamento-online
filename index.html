@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgendaFácil — Sistema de Agendamento</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FAF7F2;
+    --dark: #1A1814;
+    --brown: #6B4F3A;
+    --accent: #D4845A;
+    --accent2: #E8B89A;
+    --light: #F0EBE3;
+    --muted: #9A8C82;
+    --success: #4A7C59;
+    --border: #DDD5C8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--cream); color: var(--dark); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+  /* HEADER */
+  header {
+    background: var(--dark);
+    padding: 1.2rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--cream); letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab {
+    padding: 8px 18px; border-radius: 999px; cursor: pointer; font-size: 13px;
+    border: 1px solid transparent; color: var(--muted); transition: all .2s; background: transparent;
+  }
+  .nav-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .nav-tab:hover:not(.active) { color: var(--cream); border-color: rgba(255,255,255,.2); }
+
+  /* VIEWS */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* HERO SECTION */
+  .hero {
+    background: var(--dark);
+    padding: 4rem 2rem 5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 60% 0%, rgba(212,132,90,.15) 0%, transparent 60%);
+  }
+  .hero-tag {
+    display: inline-block;
+    background: rgba(212,132,90,.15);
+    border: 1px solid rgba(212,132,90,.3);
+    color: var(--accent2);
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 999px;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2.2rem, 5vw, 3.5rem);
+    color: var(--cream);
+    line-height: 1.15;
+    margin-bottom: 1rem;
+  }
+  .hero h1 em { color: var(--accent); font-style: italic; }
+  .hero p { color: var(--muted); font-size: 1rem; max-width: 480px; margin: 0 auto 2.5rem; line-height: 1.7; }
+  .hero-btn {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    padding: 14px 36px;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: transform .2s, background .2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .hero-btn:hover { background: #bf6e42; transform: translateY(-2px); }
+
+  /* FORM SECTION */
+  .form-section {
+    max-width: 640px;
+    margin: -2rem auto 3rem;
+    padding: 0 1.5rem;
+    position: relative;
+    z-index: 10;
+  }
+  .form-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 2.5rem;
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 60px rgba(26,24,20,.08);
+  }
+  .form-card h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.6rem;
+    margin-bottom: .4rem;
+    color: var(--dark);
+  }
+  .form-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.8rem; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 12px; font-weight: 500; color: var(--brown); letter-spacing: .04em; text-transform: uppercase; }
+  input, select, textarea {
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--dark);
+    transition: border-color .2s;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); background: #fff; }
+  select { cursor: pointer; }
+  .submit-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 14px;
+    background: var(--dark);
+    color: var(--cream);
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all .2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .submit-btn:hover { background: var(--accent); }
+  .submit-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 2rem; right: 2rem;
+    background: var(--success);
+    color: #fff;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    display: none;
+    z-index: 999;
+    animation: slideUp .3s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* PAINEL ADMIN */
+  .admin-wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+  .admin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+  .admin-header h2 { font-family: 'DM Serif Display', serif; font-size: 1.8rem; }
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+  .stat-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.2rem;
+  }
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 6px; }
+  .stat-value { font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--dark); }
+  .stat-card.accent { background: var(--accent); border-color: var(--accent); }
+  .stat-card.accent .stat-label, .stat-card.accent .stat-value { color: #fff; }
+
+  .filter-row { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .filter-btn {
+    padding: 7px 16px; border-radius: 999px; border: 1px solid var(--border);
+    background: #fff; font-size: 13px; cursor: pointer; color: var(--dark);
+    font-family: 'DM Sans', sans-serif; transition: all .15s;
+  }
+  .filter-btn.active { background: var(--dark); color: var(--cream); border-color: var(--dark); }
+
+  .agenda-list { display: flex; flex-direction: column; gap: 10px; }
+  .agenda-item {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.1rem 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    animation: fadeIn .3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .agenda-item:hover { border-color: var(--accent2); }
+  .item-left { display: flex; align-items: center; gap: 14px; }
+  .avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--light);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    color: var(--brown);
+    flex-shrink: 0;
+  }
+  .item-name { font-size: 14px; font-weight: 500; color: var(--dark); }
+  .item-detail { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .item-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .item-datetime { text-align: right; }
+  .item-date { font-size: 13px; font-weight: 500; color: var(--dark); }
+  .item-time { font-size: 12px; color: var(--muted); }
+  .badge {
+    padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 500; letter-spacing: .03em;
+  }
+  .badge-pendente { background: #FEF3C7; color: #92400E; }
+  .badge-confirmado { background: #D1FAE5; color: #065F46; }
+  .badge-cancelado { background: #FEE2E2; color: #991B1B; }
+  .action-btns { display: flex; gap: 6px; }
+  .btn-sm {
+    padding: 5px 12px; border-radius: 8px; font-size: 12px; cursor: pointer;
+    border: 1px solid var(--border); background: #fff; font-family: 'DM Sans', sans-serif;
+    transition: all .15s; color: var(--dark);
+  }
+  .btn-sm:hover { background: var(--light); }
+  .btn-confirm { border-color: #6EE7B7; color: var(--success); }
+  .btn-confirm:hover { background: #D1FAE5; }
+  .btn-cancel { border-color: #FCA5A5; color: #B91C1C; }
+  .btn-cancel:hover { background: #FEE2E2; }
+  .empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+  .empty-state svg { margin-bottom: 1rem; opacity: .3; }
+  .search-input { flex: 1; min-width: 200px; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(26,24,20,.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 500; display: none;
+    min-height: 100vh;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 20px; padding: 2rem;
+    width: 90%; max-width: 420px;
+  }
+  .modal h3 { font-family: 'DM Serif Display', serif; font-size: 1.3rem; margin-bottom: 1rem; }
+  .modal-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.5rem; }
+  .btn-primary { padding: 9px 20px; background: var(--accent); color: #fff; border: none; border-radius: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; }
+  .btn-ghost { padding: 9px 20px; background: transparent; color: var(--dark); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; }
+
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .form-card { padding: 1.5rem; }
+    header { flex-direction: column; gap: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Agenda<span>Fácil</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showView('cliente')">Agendar</button>
+    <button class="nav-tab" onclick="showView('admin')">Painel Admin</button>
+  </div>
+</header>
+
+<!-- CLIENTE VIEW -->
+<div class="view active" id="view-cliente">
+  <div class="hero">
+    <div class="hero-tag">Agendamento Online</div>
+    <h1>Agende seu horário<br>de forma <em>simples</em></h1>
+    <p>Escolha o serviço, data e horário de sua preferência. Confirmação imediata.</p>
+    <button class="hero-btn" onclick="document.querySelector('.form-section').scrollIntoView({behavior:'smooth'})">
+      Fazer agendamento
+    </button>
+  </div>
+
+  <div class="form-section">
+    <div class="form-card">
+      <h2>Novo agendamento</h2>
+      <p>Preencha os campos abaixo e confirme seu horário.</p>
+      <form id="form-ag" onsubmit="salvarAgendamento(event)">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nome completo</label>
+            <input type="text" id="ag-nome" placeholder="Seu nome" required>
+          </div>
+          <div class="form-group">
+            <label>WhatsApp</label>
+            <input type="tel" id="ag-tel" placeholder="(11) 99999-9999" required>
+          </div>
+          <div class="form-group">
+            <label>Serviço</label>
+            <select id="ag-servico" required>
+              <option value="">Escolha...</option>
+              <option value="Corte feminino">Corte feminino — R$ 80</option>
+              <option value="Corte masculino">Corte masculino — R$ 45</option>
+              <option value="Coloração">Coloração — R$ 150</option>
+              <option value="Manicure">Manicure — R$ 35</option>
+              <option value="Pedicure">Pedicure — R$ 40</option>
+              <option value="Escova progressiva">Escova progressiva — R$ 200</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Profissional</label>
+            <select id="ag-prof">
+              <option value="Qualquer um">Sem preferência</option>
+              <option value="Ana">Ana</option>
+              <option value="Beatriz">Beatriz</option>
+              <option value="Carlos">Carlos</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Data</label>
+            <input type="date" id="ag-data" required>
+          </div>
+          <div class="form-group">
+            <label>Horário</label>
+            <select id="ag-hora" required>
+              <option value="">Escolha...</option>
+              <option>08:00</option><option>09:00</option><option>10:00</option>
+              <option>11:00</option><option>13:00</option><option>14:00</option>
+              <option>15:00</option><option>16:00</option><option>17:00</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Observações (opcional)</label>
+            <textarea id="ag-obs" rows="2" placeholder="Ex: alergia a algum produto..."></textarea>
+          </div>
+        </div>
+        <button type="submit" class="submit-btn" id="btn-submit">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+          Confirmar agendamento
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN VIEW -->
+<div class="view" id="view-admin">
+  <div class="admin-wrap">
+    <div class="admin-header">
+      <div>
+        <h2>Painel de agendamentos</h2>
+        <p style="color:var(--muted);font-size:13px;margin-top:4px">Gerencie todos os horários em tempo real</p>
+      </div>
+      <input class="search-input" type="text" placeholder="Buscar por nome ou serviço..." id="search-input" oninput="renderLista()" style="max-width:260px">
+    </div>
+
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card accent">
+        <div class="stat-label">Total</div>
+        <div class="stat-value" id="stat-total">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pendentes</div>
+        <div class="stat-value" id="stat-pend">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Confirmados</div>
+        <div class="stat-value" id="stat-conf">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Hoje</div>
+        <div class="stat-value" id="stat-hoje">0</div>
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="setFiltro('todos', this)">Todos</button>
+      <button class="filter-btn" onclick="setFiltro('pendente', this)">Pendentes</button>
+      <button class="filter-btn" onclick="setFiltro('confirmado', this)">Confirmados</button>
+      <button class="filter-btn" onclick="setFiltro('cancelado', this)">Cancelados</button>
+    </div>
+
+    <div class="agenda-list" id="lista"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL CANCELAR -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3>Cancelar agendamento?</h3>
+    <p style="font-size:13px;color:var(--muted);line-height:1.6">Esta ação irá marcar o agendamento como cancelado. Deseja continuar?</p>
+    <div class="modal-btns">
+      <button class="btn-ghost" onclick="fecharModal()">Voltar</button>
+      <button class="btn-primary" style="background:#B91C1C" onclick="confirmarCancelamento()">Sim, cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// FIREBASE CONFIG — substitua com suas credenciais
+// ============================================================
+const FIREBASE_CONFIG = {
+  // apiKey: "...",
+  // authDomain: "...",
+  // projectId: "...",
+};
+
+// ============================================================
+// SIMULAÇÃO LOCAL (funciona sem Firebase para demonstração)
+// ============================================================
+let agendamentos = [
+  { id: '1', nome: 'Maria Silva', telefone: '(11) 98765-4321', servico: 'Coloração', profissional: 'Ana', data: new Date().toISOString().split('T')[0], horario: '10:00', status: 'confirmado', obs: '' },
+  { id: '2', nome: 'João Santos', telefone: '(11) 91234-5678', servico: 'Corte masculino', profissional: 'Carlos', data: new Date().toISOString().split('T')[0], horario: '14:00', status: 'pendente', obs: '' },
+  { id: '3', nome: 'Ana Oliveira', telefone: '(11) 97654-3210', servico: 'Manicure', profissional: 'Beatriz', data: '2026-05-28', horario: '09:00', status: 'pendente', obs: 'Alergia a acetona' },
+  { id: '4', nome: 'Lucas Pereira', telefone: '(11) 95432-1098', servico: 'Corte feminino', profissional: 'Ana', data: '2026-05-29', horario: '11:00', status: 'cancelado', obs: '' },
+];
+
+let filtroAtual = 'todos';
+let idParaCancelar = null;
+
+function gerarId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
+
+function iniciais(nome) {
+  return nome.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase();
+}
+
+function formatarData(str) {
+  const [a,m,d] = str.split('-');
+  return `${d}/${m}/${a}`;
+}
+
+function showView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  event.target.classList.add('active');
+  if (v === 'admin') renderLista();
+}
+
+function setFiltro(f, btn) {
+  filtroAtual = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLista();
+}
+
+function renderLista() {
+  const lista = document.getElementById('lista');
+  const busca = document.getElementById('search-input').value.toLowerCase();
+  const hoje = new Date().toISOString().split('T')[0];
+
+  let itens = agendamentos.filter(a => {
+    if (filtroAtual !== 'todos' && a.status !== filtroAtual) return false;
+    if (busca && !a.nome.toLowerCase().includes(busca) && !a.servico.toLowerCase().includes(busca)) return false;
+    return true;
+  });
+
+  itens.sort((a,b) => (a.data+a.horario).localeCompare(b.data+b.horario));
+
+  document.getElementById('stat-total').textContent = agendamentos.length;
+  document.getElementById('stat-pend').textContent = agendamentos.filter(a=>a.status==='pendente').length;
+  document.getElementById('stat-conf').textContent = agendamentos.filter(a=>a.status==='confirmado').length;
+  document.getElementById('stat-hoje').textContent = agendamentos.filter(a=>a.data===hoje).length;
+
+  if (itens.length === 0) {
+    lista.innerHTML = `<div class="empty-state">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      <p>Nenhum agendamento encontrado</p>
+    </div>`;
+    return;
+  }
+
+  lista.innerHTML = itens.map(a => `
+    <div class="agenda-item" id="item-${a.id}">
+      <div class="item-left">
+        <div class="avatar">${iniciais(a.nome)}</div>
+        <div>
+          <div class="item-name">${a.nome}</div>
+          <div class="item-detail">${a.servico} · ${a.profissional} · ${a.telefone}</div>
+          ${a.obs ? `<div class="item-detail" style="color:#B45309">Obs: ${a.obs}</div>` : ''}
+        </div>
+      </div>
+      <div class="item-right">
+        <div class="item-datetime">
+          <div class="item-date">${formatarData(a.data)}</div>
+          <div class="item-time">${a.horario}</div>
+        </div>
+        <span class="badge badge-${a.status}">${a.status.charAt(0).toUpperCase()+a.status.slice(1)}</span>
+        <div class="action-btns">
+          ${a.status === 'pendente' ? `<button class="btn-sm btn-confirm" onclick="confirmar('${a.id}')">Confirmar</button>` : ''}
+          ${a.status !== 'cancelado' ? `<button class="btn-sm btn-cancel" onclick="abrirModal('${a.id}')">Cancelar</button>` : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function confirmar(id) {
+  const ag = agendamentos.find(a => a.id === id);
+  if (ag) { ag.status = 'confirmado'; renderLista(); mostrarToast('Agendamento confirmado!'); }
+  // Firebase: updateDoc(doc(db, 'agendamentos', id), { status: 'confirmado' })
+}
+
+function abrirModal(id) {
+  idParaCancelar = id;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function fecharModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  idParaCancelar = null;
+}
+
+function confirmarCancelamento() {
+  const ag = agendamentos.find(a => a.id === idParaCancelar);
+  if (ag) { ag.status = 'cancelado'; renderLista(); mostrarToast('Agendamento cancelado.'); }
+  // Firebase: updateDoc(doc(db, 'agendamentos', id), { status: 'cancelado' })
+  fecharModal();
+}
+
+function salvarAgendamento(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+
+  const novo = {
+    id: gerarId(),
+    nome: document.getElementById('ag-nome').value,
+    telefone: document.getElementById('ag-tel').value,
+    servico: document.getElementById('ag-servico').value,
+    profissional: document.getElementById('ag-prof').value,
+    data: document.getElementById('ag-data').value,
+    horario: document.getElementById('ag-hora').value,
+    obs: document.getElementById('ag-obs').value,
+    status: 'pendente',
+  };
+
+  // Simula delay de rede
+  setTimeout(() => {
+    agendamentos.push(novo);
+    e.target.reset();
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Confirmar agendamento';
+    mostrarToast('Agendamento realizado com sucesso!');
+
+    // Firebase: addDoc(collection(db, 'agendamentos'), { ...novo, criadoEm: serverTimestamp() })
+  }, 800);
+}
+
+function mostrarToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
+// Define data mínima como hoje
+document.getElementById('ag-data').min = new Date().toISOString().split('T')[0];
+renderLista();
+</script>
+</body>
+</html>
